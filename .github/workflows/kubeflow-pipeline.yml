@@ -1,0 +1,39 @@
+name: Build and Trigger Kubeflow Pipeline
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'image/**'  # Ścieżka do folderu z kodem/Dockerfile - dostosuj do swojej struktury repo
+
+jobs:
+  build-and-trigger:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./image  # Dostosuj do folderu, gdzie jest Dockerfile
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/kfp-repo:${{ github.sha }}
+
+      - name: Trigger Kubeflow Pipeline
+        run: |
+          curl -X POST \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer ${{ secrets.WEBHOOK_TOKEN }}" \
+            -d "{\"image_name\":\"${{ secrets.DOCKERHUB_USERNAME }}/kfp-repo:${{ github.sha }}\", \"commit_sha\":\"${{ github.sha }}\"}" \
+            ${{ secrets.WEBHOOK_URL }}
