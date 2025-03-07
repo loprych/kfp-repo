@@ -10,3 +10,4 @@ RUN pip install --no-cache-dir \
     opencv-python-headless \
     pyyaml \
     tensorboard
+    
