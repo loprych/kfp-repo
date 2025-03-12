@@ -5,6 +5,7 @@ on:
       - main
     paths:
       - 'image/**'
+
 jobs:
   build-and-trigger:
     runs-on: ubuntu-latest
@@ -32,9 +33,15 @@ jobs:
       
       - name: Trigger Kubeflow Pipeline
         run: |
-          curl -X POST \
-            -H "Content-Type: application/json" \
-            -H "Authorization: Bearer ${{ secrets.WEBHOOK_TOKEN }}" \
-            -d "{\"image_name\":\"lukoprych/yolov8-pipeline-base:${{ github.sha }}\", \"commit_sha\":\"${{ github.sha }}\"}" \
-            ${{ secrets.WEBHOOK_URL }}
+          curl -X POST "${{ secrets.WEBHOOK_URL }}" \
+          -H "Content-Type: application/json" \
+          -H "Authorization: Bearer ${{ secrets.WEBHOOK_TOKEN }}" \
+          -d '{
+                "run_name": "webhook-run",
+                "experiment_id": "${{ secrets.EXPERIMENT_ID }}",
+                "pipeline_id": "${{ secrets.PIPELINE_ID }}",
+                "version_id": "${{ secrets.VERSION_ID }}",
+                "namespace": "kubeflow-user-example-com"
+             }'
+
             
